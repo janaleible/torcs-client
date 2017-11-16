@@ -135,7 +135,11 @@ class Client:
                 sensor_dict = self.serializer.decode(buffer)
                 carstate = CarState(sensor_dict)
                 _logger.debug(carstate)
-
+                if (carstate.distance_from_center<-0.9 or carstate.distance_from_center>0.9):
+                    with open("carfitness.txt", "w") as f:
+                        fitness = str(carstate.distance_raced)
+                        f.write(fitness)
+                    self.stop()  # stop the client
                 command = self.driver.drive(carstate)
 
                 _logger.debug(command)

@@ -4,16 +4,24 @@ import torch
 import torch.nn.functional as F
 from pandas import DataFrame
 from torch.autograd import Variable
+from torch.utils.data import Dataset
 
 
-class TrainingData:
+class TrainingData(Dataset):
 
     targetColumns = ['ACCELERATION', 'BRAKE', 'STEERING']
     dataColumns = ['SPEED', 'TRACK_POSITION', 'ANGLE_TO_TRACK_AXIS'] + ['TRACK_EDGE_' + str(i) for i in range(18)]
 
-    def __init__(self, dataframe: DataFrame):
-        self.targets = dataframe.loc[:, TrainingData.targetColumns]
-        self.data = dataframe.loc[:, TrainingData.dataColumns]
+    def __init__(self, dataframe: DataFrame = None):
+        self.targets = DataFrame()
+        self.data = DataFrame()
+
+        if(dataframe is not None): self.append(dataframe)
+
+    def append(self, dataframe: DataFrame):
+        dataframe.index = range(self.__len__(), self.__len__() + len(dataframe))
+        self.targets = self.targets.append(dataframe.loc[:, TrainingData.targetColumns])
+        self.data = self.data.append(dataframe.loc[:, TrainingData.dataColumns])
 
     def __len__(self):
         return len(self.data.index)
@@ -58,4 +66,4 @@ class Net(torch.nn.Module):
                 optimiser.step()
 
     def save(self, directory: str):
-        torch.save(self.state_dict(), directory + time.strftime('%m%d%H%M') + '.model')
+        torch.save(self.state_dict(), directory + time.strftime('%m%d%H%M%S') + '.model')

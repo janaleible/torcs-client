@@ -71,6 +71,7 @@ class Net(torch.nn.Module):
 
                 outputs = self(inputs)
                 loss = lossFunction(outputs, targets)
+                print(' loss: ' + str(loss))
                 loss.backward()
                 optimiser.step()
 

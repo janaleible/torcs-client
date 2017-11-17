@@ -1,4 +1,5 @@
 from typing import Callable
+import json
 import time
 import torch
 import torch.nn.functional as F
@@ -38,7 +39,7 @@ class Net(torch.nn.Module):
         self.h1 = torch.nn.Linear(inputSize, hiddenSize)
         self.h2 = torch.nn.Linear(hiddenSize, outputSize)
 
-    def forward(self, x):
+    def forward(self, x: Variable) -> Variable:
 
         x = self.h1(x)
         x = F.sigmoid(x)
@@ -47,11 +48,19 @@ class Net(torch.nn.Module):
 
         return x
 
-    def trainNet(self, data: TrainingData, optimiserFunction: Callable, numberOfEpochs: int):
-        
-        optimiser = optimiserFunction(self.parameters(), lr=0.001, momentum=0.9)
+    def trainNet(self,
+        data: TrainingData,
+        optimiserFunction: Callable = torch.optim.SGD,
+        lossFunction: Callable = F.mse_loss,
+        numberOfEpochs: int = 2,
+        learningRate: float = 0.001,
+        weight_decay: float = 1
+    ):
+
+        optimiser = optimiserFunction(self.parameters(), lr=learningRate, weight_decay=weight_decay)
 
         for epoch in range(numberOfEpochs):
+            print('Epoch ' + str(epoch))
             for i in range(len(data)):
                 inputs, targets = data[i]
 
@@ -61,9 +70,41 @@ class Net(torch.nn.Module):
                 optimiser.zero_grad()
 
                 outputs = self(inputs)
-                loss = F.l1_loss(outputs, targets)
+                loss = lossFunction(outputs, targets)
                 loss.backward()
                 optimiser.step()
 
-    def save(self, directory: str):
-        torch.save(self.state_dict(), directory + time.strftime('%m%d%H%M%S') + '.model')
+    def save(self, directory: str, modelName: str):
+        torch.save(self.state_dict(), directory + modelName + '.model')
+
+
+
+class Meta():
+
+    def __init__(self):
+        self.data = {}
+        self.loaded = False
+
+    @staticmethod
+    def load(file: str = './models/models/00_meta.json'):
+        meta = Meta()
+        meta.data = json.load(open(file))
+        meta.loaded = True
+
+        return meta
+
+    def append(self, model: str, data: {}):
+
+        if(model in self.data):
+            for key, value in data:
+                self.data[model][key] = value
+
+        else:
+            self.data[model] = data
+
+    def save(self, file: str = './models/models/00_meta.json'):
+
+        if(not self.loaded): raise Exception('Must load meta file first')
+
+        with open(file, 'w') as metaFile:
+            json.dump(self.data, metaFile)

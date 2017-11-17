@@ -3,3 +3,10 @@ __pycache__/
 drivelogs/
 output/
 .idea/
+.~lock.aalborg.csv2.csv#
+.~lock.aalborg.csvnormalized.csv#
+.~lock.aalborgnormalized.csv#
+.~lock.f-speedwaynormalized.csv#
+training-data/train_data/.~lock.f-speedway.csv#
+neat-python-master/
+

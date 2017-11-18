@@ -1,4 +1,6 @@
 import math
+
+import pandas
 import torch
 from torch.autograd import Variable
 
@@ -6,7 +8,6 @@ from pytocl.driver import Driver
 from pytocl.car import State, Command
 
 from models.basicnetwork import Net
-
 
 class MyDriver(Driver):
 
@@ -18,31 +19,57 @@ class MyDriver(Driver):
         'down': 2000
     }
 
+    stats = pandas.read_csv('./training-data/train_data/allstats.csv')
+
     def drive(self, carstate: State) -> Command:
 
         command = Command()
 
-        net = Net(21, 30, 3)
-        net.load_state_dict(torch.load('models/models/1116165357.model'))
+        net = Net(22, 60, 1)
+        net.load_state_dict(torch.load('models/models/1118165611.model'))
 
         prediction = net(self.stateToSample(carstate))
 
-        command.accelerator = self.predictionToFloat(prediction[0])
-        command.brake = self.predictionToFloat(prediction[1])
-        command.steering = self.degToRadians(self.predictionToFloat(prediction[2]))
+        # command.accelerator = self.predictionToFloat(prediction[0])
+        # command.brake = self.predictionToFloat(prediction[0])
+        command.steering = self.predictionToFloat(prediction[0])
+        command.accelerator = 1
+
+        # print(command)
 
         command.gear = self.shiftGears(carstate.gear, carstate.rpm)
+        # command.gear = 1
 
         return command
 
     def predictionToFloat(self, prediction: Variable) -> float:
         return prediction.data.numpy()[0]
 
+    def stateToSampleNormalised(self, state: State) -> Variable:
+
+        sample = [
+             (state.speed_x - self.stats['SPEED'][0]) / self.stats['SPEED'][1],
+             (state.distance_from_center - self.stats['TRACK_POSITION'][0]) / self.stats['TRACK_POSITION'][1],
+             (state.angle - self.stats['ANGLE_TO_TRACK_AXIS'][0]) / self.stats['ANGLE_TO_TRACK_AXIS'][1]
+        ] + [
+            (distance - self.stats['TRACK_EDGE_' + str(i)][0]) / self.stats['TRACK_EDGE_' + str(i)][1]
+            for i, distance in enumerate(state.distances_from_edge)
+        ]
+
+        return Variable(torch.FloatTensor(sample))
+
     def stateToSample(self, state: State) -> Variable:
 
-        sample = [state.speed_x, state.distance_from_center, self.radiansToDegrees(state.angle)] + [distance for distance in state.distances_from_edge]
+        sample = [
+             state.speed_x,
+             state.distance_from_center,
+             self.degToRadians(state.angle)
+        ] + [
+            distance
+            for i, distance in enumerate(state.distances_from_edge)
+        ]
 
-        return Variable(torch.FloatTensor(sample[0:-1]))
+        return Variable(torch.FloatTensor(sample))
 
     def shiftGears(self, previousGear: int, rpm: float) -> int:
 

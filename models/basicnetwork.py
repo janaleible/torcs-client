@@ -1,17 +1,17 @@
 from typing import Callable
 import json
-import time
 import torch
 import torch.nn.functional as F
 from pandas import DataFrame
 from torch.autograd import Variable
+from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
 
 class TrainingData(Dataset):
 
-    targetColumns = ['ACCELERATION', 'BRAKE', 'STEERING']
-    dataColumns = ['SPEED', 'TRACK_POSITION', 'ANGLE_TO_TRACK_AXIS'] + ['TRACK_EDGE_' + str(i) for i in range(18)]
+    targetColumns = ['STEERING']
+    dataColumns = ['SPEED', 'TRACK_POSITION', 'ANGLE_TO_TRACK_AXIS'] + ['TRACK_EDGE_' + str(i) for i in range(19)]
 
     def __init__(self, dataframe: DataFrame = None):
         self.targets = DataFrame()
@@ -53,16 +53,21 @@ class Net(torch.nn.Module):
         optimiserFunction: Callable = torch.optim.SGD,
         lossFunction: Callable = F.mse_loss,
         numberOfEpochs: int = 2,
-        learningRate: float = 0.001,
-        weight_decay: float = 1
-    ):
+        learningRate: float = 0.001
+    ) -> list:
 
-        optimiser = optimiserFunction(self.parameters(), lr=learningRate, weight_decay=weight_decay)
+        optimiser = optimiserFunction(self.parameters(), lr=learningRate)
 
+        dataLoader = DataLoader(data, shuffle=True)
+
+        losses = []
         for epoch in range(numberOfEpochs):
+
             print('Epoch ' + str(epoch))
-            for i in range(len(data)):
-                inputs, targets = data[i]
+            totalLoss = 0
+
+            for i, sample in enumerate(dataLoader):
+                inputs, targets = sample
 
                 inputs = Variable(inputs)
                 targets = Variable(targets)
@@ -71,9 +76,13 @@ class Net(torch.nn.Module):
 
                 outputs = self(inputs)
                 loss = lossFunction(outputs, targets)
-                print(' loss: ' + str(loss))
+                totalLoss += loss
                 loss.backward()
                 optimiser.step()
+
+            losses.append(totalLoss)
+
+        return losses
 
     def save(self, directory: str, modelName: str):
         torch.save(self.state_dict(), directory + modelName + '.model')

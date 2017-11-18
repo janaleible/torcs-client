@@ -4,12 +4,11 @@ import pandas as pd
 
 
 
-
-file_names = ["aalborg", "alpine-1", "f-speedway"]
+file_names = ["all"]
 
 
 for i in range(len(file_names)):
-    with open("/home/student/Documents/torcs-server/torcs-client//training-data/train_data/" + file_names[i]+".csv", "r") as csvfile:
+    with open("./training-data/train_data/" + file_names[i]+".csv", "r") as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         header = next(reader)
         data_list = []
@@ -24,7 +23,6 @@ for i in range(len(file_names)):
             for k in range(num_col):
                 data_mtx[j][k] = data_list[j][k]
 
-        column_means = np.zeros(num_col)
         column_means = np.sum(data_mtx, axis=0)/(num_row)
         column_std = data_mtx.std(0)
 
@@ -37,9 +35,9 @@ for i in range(len(file_names)):
             data_mtx[:,l] = (data_mtx[:,l]-column_means[l])/column_std[l]
 
         df = pd.DataFrame(data_mtx, columns = header)
-        df.to_csv(file_names[i]+"normalized.csv", index = False, header = True, sep = ",")
+        df.to_csv("./training-data/train_data/" + file_names[i]+"normalized.csv", index = False, header = True, sep = ",")
 
         df_stats = pd.DataFrame(column_stats, columns = header)
-        df_stats.to_csv(file_names[i]+"stats.csv", index = False, header = True, sep = ",")
+        df_stats.to_csv("./training-data/train_data/" + file_names[i]+"stats.csv", index = False, header = True, sep = ",")
         # np.savetxt(file_names[i]+"normalized.csv", data_mtx, delimiter=",")
 

@@ -80,7 +80,7 @@ class Net(torch.nn.Module):
                 loss.backward()
                 optimiser.step()
 
-            losses.append(totalLoss)
+            losses.append(totalLoss.data.numpy()[0])
 
         return losses
 

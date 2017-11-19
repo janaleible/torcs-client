@@ -26,7 +26,7 @@ class MyDriver(Driver):
         command = Command()
 
         net = Net(22, 60, 1)
-        net.load_state_dict(torch.load('models/models/1118165611.model'))
+        net.load_state_dict(torch.load('models/models/1118173945.model'))
 
         prediction = net(self.stateToSample(carstate))
 

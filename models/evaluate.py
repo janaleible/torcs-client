@@ -6,54 +6,62 @@ from torch.autograd import Variable
 
 from models.basicnetwork import Net, TrainingData
 from my_driver import MyDriver
+from pytocl.car import State, MPS_PER_KMH, DEGREE_PER_RADIANS
 
 
-def stateToSample(state) -> Variable:
-    sample = [
-        (state[0] - stats['SPEED'][0]) / stats['SPEED'][1],
-        (state[1] - stats['TRACK_POSITION'][0]) / stats['TRACK_POSITION'][1],
-        (radiansToDegrees(state[2]) - stats['ANGLE_TO_TRACK_AXIS'][0]) /
-        stats['ANGLE_TO_TRACK_AXIS'][1]
-    ] + [
-        (distance - stats['TRACK_EDGE_' + str(i)][0]) / stats['TRACK_EDGE_' + str(i)][1]
-        for i, distance in enumerate(state[3:22])
-    ]
+def dataToState(data) -> State:
+    datalist = list(data)
+    state = State({
+        'angle': datalist[2] / DEGREE_PER_RADIANS,
+        'curLapTime': 0,
+        'damage': 0,
+        'distFromStart': 0,
+        'distRaced': 0,
+        'fuel': 0,
+        'gear': 0,
+        'lastLapTime': 0,
+        'opponents': {},
+        'racePos': 0,
+        'rpm': 0,
+        'speedX': datalist[0] / MPS_PER_KMH,
+        'speedY': 0,
+        'speedZ': 0,
+        'track': datalist[3:22],
+        'trackPos': datalist[1],
+        'wheelSpinVel': (0, 0),
+        'z': 0,
+        'focus': (0,0)
+    })
+    return state
 
-    return Variable(torch.FloatTensor(sample))
-
-def degToRadians(degree: float) -> float:
-    return (degree * math.pi) / 180
-
-def radiansToDegrees(radians: float) -> float:
-    return (radians * 180) / math.pi
 
 def predictionToFloat(prediction: Variable) -> float:
     return prediction.data.numpy()[0]
 
-net = Net(22, 60, 2)
-net.load_state_dict(torch.load('models/models/1118113406.model'))
+net = Net(22, 60, 1)
+net.load_state_dict(torch.load('models/models/1118173945.model'))
 
-stats = pandas.read_csv('./training-data/train_data/allstats.csv')
-
-trainingData = TrainingData(pandas.read_csv('training-data/train_data/allnormalized.csv'))
-
-steering = trainingData.targets['STEERING']
+trainingData = TrainingData(pandas.read_csv('training-data/train_data/alpine-1.csv'))
 
 observations = []
+driver = MyDriver()
 
 for i in range(len(trainingData)):
 
-    sample = stateToSample(trainingData[i][0])
+    state = dataToState(trainingData[i][0])
+    sample = driver.stateToSample(state)
+
+    command = driver.drive(state)
 
     observation = {
-        'target': (trainingData[i][1])[1],
-        'actual': predictionToFloat(net(sample)[1])
+        'target': (trainingData[i][1]).numpy()[0],
+        'actual': command.steering
     }
 
     observations.append(observation)
 
 observations.sort(key=lambda observation: observation['target'])
 
-plt.plot(range(len(observations)), [observation['target'] for observation in observations])
 plt.plot(range(len(observations)), [observation['actual'] for observation in observations])
+plt.plot(range(len(observations)), [observation['target'] for observation in observations])
 plt.show()

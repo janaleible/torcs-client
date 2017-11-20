@@ -38,9 +38,6 @@ def dataToState(data) -> State:
 def predictionToFloat(prediction: Variable) -> float:
     return prediction.data.numpy()[0]
 
-net = Net(22, 60, 1)
-net.load_state_dict(torch.load('models/models/1118173945.model'))
-
 trainingData = TrainingData(pandas.read_csv('training-data/train_data/alpine-1.csv'))
 
 observations = []

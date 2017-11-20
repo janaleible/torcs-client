@@ -17,6 +17,7 @@ dataFile = 'alpine-1'
 trainingData = TrainingData(pandas.read_csv('training-data/train_data/' + dataFile + '.csv'))
 
 trainingData.data['ANGLE_TO_TRACK_AXIS'] = trainingData.data['ANGLE_TO_TRACK_AXIS'] * math.pi / 180
+trainingData.targets['STEERING'] = (trainingData.targets['STEERING'] + 1) / 2
 
 optimiser = torch.optim.Adam
 loss = F.mse_loss
@@ -37,6 +38,7 @@ testData = list(trainingData.data.iloc[1])
 testTargets = list(trainingData.targets.iloc[1])
 
 prediction = net(Variable(torch.FloatTensor(testData)))
+prediction = prediction * 2 - 1
 
 modelMeta = {
     'Expection': str(testTargets),

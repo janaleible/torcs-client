@@ -26,13 +26,13 @@ class MyDriver(Driver):
         command = Command()
 
         net = Net(22, 60, 1)
-        net.load_state_dict(torch.load('models/models/1118173945.model'))
+        net.load_state_dict(torch.load('models/models/1120090428.model'))
 
         prediction = net(self.stateToSample(carstate))
 
         # command.accelerator = self.predictionToFloat(prediction[0])
         # command.brake = self.predictionToFloat(prediction[0])
-        command.steering = self.predictionToFloat(prediction[0])
+        command.steering = self.predictionToFloat(prediction[0]) * 2 - 1
         command.accelerator = 1
 
         # print(command)

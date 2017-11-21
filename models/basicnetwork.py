@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from models.data import SteeringTrainingData
+from models.data import SteeringTrainingData, TrainingData
 
 
 class Net(torch.nn.Module):
@@ -27,7 +27,7 @@ class Net(torch.nn.Module):
         return x
 
     def trainNet(self,
-         data: SteeringTrainingData,
+         data: TrainingData,
          optimiserFunction: Callable = torch.optim.SGD,
          lossFunction: Callable = F.mse_loss,
          numberOfEpochs: int = 2,
@@ -76,6 +76,11 @@ class Net(torch.nn.Module):
     def predict(self, sample: Variable):
         pass
 
+    @staticmethod
+    @abstractmethod
+    def getPlainNetwork():
+        pass
+
 class SteeringNet(Net):
 
     def subdirectory(self) -> str:
@@ -84,6 +89,11 @@ class SteeringNet(Net):
     def predict(self, sample: Variable) -> float:
         prediction = self.predictionToFloat(self(sample))
         return prediction * 2 - 1
+
+    @staticmethod
+    def getPlainNetwork():
+        return SteeringNet(22, 60, 1)
+
 
 class Meta():
 

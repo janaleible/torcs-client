@@ -58,5 +58,5 @@ for i in range(len(steeringData)):
 observations.sort(key=lambda observation: observation['target'])
 
 plt.plot(range(len(observations)), [observation['actual'] for observation in observations])
-plt.plot(range(len(observations)), [observation['target'] for observation in observations])
+plt.plot(range(len(observations)), [observation['target'] * 2 - 1 for observation in observations])
 plt.show()

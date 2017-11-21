@@ -7,7 +7,8 @@ from torch.autograd import Variable
 from pytocl.driver import Driver
 from pytocl.car import State, Command
 
-from models.basicnetwork import Net
+from models.basicnetwork import Net, SteeringNet
+
 
 class MyDriver(Driver):
 
@@ -25,14 +26,12 @@ class MyDriver(Driver):
 
         command = Command()
 
-        net = Net(22, 60, 1)
-        net.load_state_dict(torch.load('models/models/1120090428.model'))
-
-        prediction = net(self.stateToSample(carstate))
+        steeringNet = SteeringNet(22, 60, 1)
+        steeringNet.load_state_dict(torch.load('models/models/1121123912.model'))
 
         # command.accelerator = self.predictionToFloat(prediction[0])
         # command.brake = self.predictionToFloat(prediction[0])
-        command.steering = self.predictionToFloat(prediction[0]) * 2 - 1
+        command.steering = steeringNet.predict(self.stateToSample(carstate))
         command.accelerator = 0.2
 
         # print(command)
@@ -42,8 +41,6 @@ class MyDriver(Driver):
 
         return command
 
-    def predictionToFloat(self, prediction: Variable) -> float:
-        return prediction.data.numpy()[0]
 
     def stateToSampleNormalised(self, state: State) -> Variable:
 

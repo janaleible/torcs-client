@@ -63,14 +63,27 @@ class Net(torch.nn.Module):
         return losses
 
     def save(self, directory: str, modelName: str):
-        # torch.save(self.state_dict(), directory + self.subdirectory() + modelName + '.model')
-        torch.save(self.state_dict(), directory + modelName + '.model')
+        torch.save(self.state_dict(), directory + self.subdirectory() + modelName + '.model')
 
-    # @abstractmethod
-    # def subdirectory(self) -> str:
-    #     pass
+    def predictionToFloat(self, prediction: Variable) -> float:
+        return prediction.data.numpy()[0]
 
+    @abstractmethod
+    def subdirectory(self) -> str:
+        pass
 
+    @abstractmethod
+    def predict(self, sample: Variable):
+        pass
+
+class SteeringNet(Net):
+
+    def subdirectory(self) -> str:
+        return 'steering/'
+
+    def predict(self, sample: Variable) -> float:
+        prediction = self.predictionToFloat(self(sample))
+        return prediction * 2 - 1
 
 class Meta():
 

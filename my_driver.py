@@ -33,7 +33,7 @@ class MyDriver(Driver):
         # command.accelerator = self.predictionToFloat(prediction[0])
         # command.brake = self.predictionToFloat(prediction[0])
         command.steering = self.predictionToFloat(prediction[0]) * 2 - 1
-        command.accelerator = 1
+        command.accelerator = 0.2
 
         # print(command)
 

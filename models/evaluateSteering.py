@@ -2,7 +2,7 @@ import pandas
 import matplotlib.pyplot as plt
 from torch.autograd import Variable
 
-from models.data import SteeringTrainingData
+from models.data import SteeringTrainingData, BrakingTrainingData
 from my_driver import MyDriver
 from pytocl.car import State, MPS_PER_KMH, DEGREE_PER_RADIANS
 
@@ -37,6 +37,7 @@ def predictionToFloat(prediction: Variable) -> float:
     return prediction.data.numpy()[0]
 
 steeringData = SteeringTrainingData(pandas.read_csv('training-data/train_data/alpine-1.csv'))
+brakingData = BrakingTrainingData(pandas.read_csv('training-data/train_data/alpine-1.csv'))
 
 observations = []
 driver = MyDriver()
@@ -49,14 +50,20 @@ for i in range(len(steeringData)):
     command = driver.drive(state)
 
     observation = {
-        'target': (steeringData[i][1]).numpy()[0],
-        'actual': command.steering
+        'target': (brakingData[i][1]).numpy()[0],
+        'actual': command.brake
     }
+
+    # observation = {
+    #     'target': (steeringData[i][1]).numpy()[0],
+    #     'actual': command.steering
+    # }
 
     observations.append(observation)
 
 observations.sort(key=lambda observation: observation['target'])
 
 plt.plot(range(len(observations)), [observation['actual'] for observation in observations])
-plt.plot(range(len(observations)), [observation['target'] * 2 - 1 for observation in observations])
+# plt.plot(range(len(observations)), [observation['target'] * 2 - 1 for observation in observations])
+plt.plot(range(len(observations)), [observation['target'] for observation in observations])
 plt.show()

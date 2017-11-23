@@ -54,3 +54,7 @@ class BrakingTrainingData(TrainingData):
 
     def getTargetColumns(self) -> list:
         return ['BRAKE']
+
+    def transformData(self, dataframe: DataFrame):
+        dataframe['BRAKE'] = round(dataframe['BRAKE'], 0)
+        return dataframe

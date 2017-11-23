@@ -7,18 +7,24 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
-from models.Trainer import SteeringTrainer
+from models.Trainer import SteeringTrainer, BrakingTrainer
 from models.basicnetwork import Net, Meta
-from models.data import SteeringTrainingData
+from models.data import SteeringTrainingData, BrakingTrainingData
 
+# SteeringTrainer().train(
+#     SteeringTrainingData(pandas.read_csv('training-data/train_data/alpine-1.csv')),
+#     torch.optim.Adam,
+#     F.mse_loss,
+#     30,
+#     0.00001
+# )
 
-trainer = SteeringTrainer()
-trainer.train(
-    SteeringTrainingData(pandas.read_csv('training-data/train_data/alpine-1.csv')),
+BrakingTrainer().train(
+    BrakingTrainingData(pandas.read_csv('training-data/train_data/alpine-1.csv')),
     torch.optim.Adam,
     F.mse_loss,
-    30,
-    0.00001
+    150,
+    0.0005
 )
 
 # modelsDir = './models/models/'

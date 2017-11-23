@@ -1,11 +1,11 @@
 from abc import abstractmethod
-from datetime import time
+import datetime
 from typing import Callable
 
 import torch
 import matplotlib.pyplot as plt
 
-from models.basicnetwork import Net, SteeringNet
+from models.basicnetwork import Net, SteeringNet, BrakingNet
 from models.data import TrainingData
 
 
@@ -21,7 +21,7 @@ class Trainer:
     ):
         net = self.getNetwork()
         trainingLoss = net.trainNet(data, optimiser, loss, numberOfEpochs, learningRate)
-        modelName = 'xx' #time.strftime('%m%d%H%M%S')
+        modelName = datetime.datetime.now().strftime('%m%d%H%M%S')
         net.save(self.getModelsDir(), modelName)
 
         plt.plot(range(len(trainingLoss)), trainingLoss)
@@ -43,3 +43,8 @@ class SteeringTrainer(Trainer):
 
     def getNetwork(self) -> Net:
         return SteeringNet.getPlainNetwork()
+
+class BrakingTrainer(Trainer):
+
+    def getNetwork(self) -> Net:
+        return BrakingNet.getPlainNetwork()

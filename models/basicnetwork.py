@@ -94,6 +94,27 @@ class SteeringNet(Net):
     def getPlainNetwork():
         return SteeringNet(22, 60, 1)
 
+class BrakingNet(Net):
+
+    def subdirectory(self) -> str:
+        return 'braking/'
+
+    def predict(self, sample: Variable) -> float:
+        prediction = round(self.predictionToFloat(self(sample)))
+        return prediction
+
+    @staticmethod
+    def getPlainNetwork():
+        return BrakingNet(22, 60, 1)
+
+    def forward(self, x: Variable) -> Variable:
+
+        x = self.h1(x)
+        x = F.sigmoid(x)
+        x = self.h2(x)
+        x = F.sigmoid(x)
+
+        return x
 
 class Meta():
 

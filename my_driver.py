@@ -24,6 +24,9 @@ class MyDriver(Driver):
 
     def drive(self, carstate: State) -> Command:
 
+        if carstate.distances_from_edge[0] == -1:
+            return self.recoveryCommand()
+
         command = Command()
 
         steeringNet = SteeringNet.getPlainNetwork()
@@ -37,17 +40,28 @@ class MyDriver(Driver):
 
         sample = self.stateToSample(carstate)
 
+        print(carstate)
+
         command.steering = steeringNet.predict(sample)
         command.brake = brakingNet.predict(sample)
         command.accelerator = 0.2
 
-        # print(command)
+        print(command)
 
         command.gear = self.shiftGears(carstate.gear, carstate.rpm)
         # command.gear = 1
 
         return command
 
+    def recoveryCommand(self) -> Command:
+
+        command = Command()
+
+        command.gear = -1
+        command.accelerator = 0.1
+        command.steering = 0
+
+        return command
 
     def stateToSampleNormalised(self, state: State) -> Variable:
 
@@ -77,7 +91,7 @@ class MyDriver(Driver):
 
     def shiftGears(self, previousGear: int, rpm: float) -> int:
 
-        if (previousGear == 0): newGear = 1
+        if (previousGear <= 0): newGear = 1
         elif(self.timeSinceLastShift < self.gearShiftParameters['shiftDelay']): newGear = previousGear
         else:
             if (rpm > self.gearShiftParameters['up']): newGear = min(previousGear + 1, 6)

@@ -1,54 +1,67 @@
-import os
+from abc import abstractmethod
 
-from pandas import DataFrame, Series
-from torch.utils.data import Dataset
 import sqlite3
 
-observation = {}
-keys = [
-    'accel', 'brake', 'gear', 'gear2', 'steer', 'clutch', 'curTime', 'angle', 'curLapTime', 'damage', 'distFromStart', 'distRaced', 'fuel', 'lastLapTime', 'racePos', 'opponents0', 'opponents1', 'opponents2', 'opponents3', 'opponents4', 'opponents5', 'opponents6', 'opponents7', 'opponents8', 'opponents9', 'opponents10', 'opponents11', 'opponents12', 'opponents13', 'opponents14', 'opponents15', 'opponents16', 'opponents17', 'opponents18', 'opponents19', 'opponents20', 'opponents21', 'opponents22', 'opponents23', 'opponents24', 'opponents25', 'opponents26', 'opponents27', 'opponents28', 'opponents29', 'opponents30', 'opponents31', 'opponents32', 'opponents33', 'opponents34', 'opponents35', 'rpm', 'speedX', 'speedY', 'speedZ', 'track0', 'track1', 'track2', 'track3', 'track4', 'track5', 'track6', 'track7', 'track8', 'track9', 'track10', 'track11', 'track12', 'track13', 'track14', 'track15', 'track16', 'track17', 'track18', 'trackPos', 'wheelSpinVel0', 'wheelSpinVel1', 'wheelSpinVel2', 'wheelSpinVel3', 'z', 'focus0', 'focus1', 'focus2', 'focus3', 'focus4'
-]
+import torch
+from pandas import DataFrame
+from torch.utils.data import Dataset
 
-db = sqlite3.connect('training-data/trainingData.db')
 
-sql = 'DROP TABLE IF EXISTS observations'
-db.execute(sql)
-db.commit()
+class ExtendedData(Dataset):
 
-sql = 'CREATE TABLE observations (track'
-for key in keys:
-    sql += (', ' + key)
-sql += ');'
+    def __init__(self, track='alpine_1'):
 
-db.execute(sql)
-db.commit()
+        db = sqlite3.connect('training-data/trainingData.db')
 
-for fileName in os.listdir('training-data/extended/'):
+        sqlData = 'SELECT ' \
+                  + list2list(self.getDataColumns()) \
+                  + ' FROM observations WHERE track = \'' + track + '\''
 
-    with open('training-data/extended/' + fileName) as file:
-        lines = file.readlines()
+        sqlTarget = 'SELECT ' \
+                  + list2list(self.getTargetColumns()) \
+                  + ' FROM observations WHERE track = \'' + track + '\''
 
-    print('Reading ' + fileName)
+        self.data = DataFrame(db.execute(
+            sqlData
+        ).fetchall())
 
-    for line in lines:
-        line = line.strip()[1:-1]
+        self.targets = DataFrame(db.execute(
+            sqlTarget
+        ).fetchall())
 
-        sqlInsert = 'INSERT INTO observations (track, '
-        sqlValues = "VALUES ('" + fileName + "', "
+        db.close()
 
-        for tuple in line.split(')('):
-            valueList = tuple.split()
-            key = valueList.pop(0)
+    def __getitem__(self, index):
+        return torch.FloatTensor(list(self.data.loc[index, :].values)), torch.FloatTensor(list(self.targets.loc[index, :].values))
 
-            if len(valueList) == 1:
-                sqlInsert += key + ', '
-                sqlValues += valueList[0] + ', '
-            else:
-                for i, value in enumerate(valueList):
-                    sqlInsert += key + str(i) + ', '
-                    sqlValues += value + ', '
+    def __len__(self):
+        return len(self.data)
 
-        sql = sqlInsert[:-2] + ') ' + sqlValues[:-2] + ')'
-        db.execute(sql)
+    @abstractmethod
+    def getDataColumns(self) -> []:
+        pass
 
-    db.commit()
+    @abstractmethod
+    def getTargetColumns(self) -> []:
+        pass
+
+class ExtendedBrakingData(ExtendedData):
+
+    def getDataColumns(self) -> []:
+        return ['angle', 'track0', 'track1', 'track2', 'track3', 'track4', 'track5', 'track6', 'track7', 'track8', 'track9', 'track10', 'track11', 'track12', 'track13', 'track14', 'track15', 'track16', 'track17', 'track18', 'trackPos', 'wheelSpinVel0', 'wheelSpinVel1', 'wheelSpinVel2', 'wheelSpinVel3', 'z', 'focus0', 'focus1', 'focus2', 'focus3', 'focus4']
+
+    def getTargetColumns(self) -> []:
+        return ['brake']
+
+def list2list(list: []) -> str:
+
+    string = ''
+
+    for entry in list:
+        string += entry + ', '
+
+    return string[:-2]
+
+data = ExtendedBrakingData()
+
+print(data)

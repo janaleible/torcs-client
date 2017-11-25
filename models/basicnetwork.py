@@ -88,11 +88,22 @@ class SteeringNet(Net):
 
     def predict(self, sample: Variable) -> float:
         prediction = self.predictionToFloat(self(sample))
-        return prediction * 2 - 1
+        # return prediction * 2 - 1
+        return prediction
 
     @staticmethod
-    def getPlainNetwork():
-        return SteeringNet(22, 60, 1)
+    def getPlainNetwork(extended=True):
+        if (extended): return SteeringNet(34, 60, 1)
+        else: return SteeringNet(22, 60, 1)
+
+    def forward(self, x: Variable) -> Variable:
+
+        x = self.h1(x)
+        x = F.sigmoid(x)
+        x = self.h2(x)
+
+        return x
+
 
 class BrakingNet(Net):
 
@@ -104,8 +115,9 @@ class BrakingNet(Net):
         return prediction
 
     @staticmethod
-    def getPlainNetwork():
-        return BrakingNet(22, 60, 1)
+    def getPlainNetwork(extended=True):
+        if (extended): return BrakingNet(34, 60, 1)
+        else: return BrakingNet(22, 60, 1)
 
     def forward(self, x: Variable) -> Variable:
 

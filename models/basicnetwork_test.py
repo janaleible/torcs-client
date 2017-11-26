@@ -8,14 +8,14 @@ SteeringTrainer(extended=True).train(
     ExtendedSteeringData(),
     torch.optim.Adam,
     F.mse_loss,
-    30,
+    10,
     0.00001
 )
 
-# BrakingTrainer().train(
+# BrakingTrainer(extended=True).train(
 #     ExtendedBrakingData(),
 #     torch.optim.Adam,
 #     F.mse_loss,
-#     50,
+#     300,
 #     0.00001
 # )

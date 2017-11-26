@@ -17,11 +17,13 @@ class ExtendedData(TrainingData):
 
         sqlData = 'SELECT ' \
                   + list2list(self.getDataColumns()) \
-                  + ' FROM observations WHERE track = \'' + track + '\''
+                  + ' FROM observations'
+                  # + ' FROM observations WHERE track = \'' + track + '\''
 
         sqlTarget = 'SELECT ' \
                   + list2list(self.getTargetColumns()) \
-                  + ' FROM observations WHERE track = \'' + track + '\''
+                  + ' FROM observations'
+                  # + ' FROM observations WHERE track = \'' + track + '\''
 
         self.data = DataFrame(db.execute(
             sqlData

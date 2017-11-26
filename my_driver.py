@@ -29,14 +29,14 @@ class MyDriver(Driver):
 
         self.angles.append(carstate.angle)
 
-        if carstate.distances_from_edge[0] == -1:
-            return self.recoveryCommand()
+        # if carstate.distances_from_edge[0] == -1:
+        #     return self.recoveryCommand()
 
         command = Command()
 
 
         steeringNet = SteeringNet.getPlainNetwork(extended=True)
-        steeringNet.load_state_dict(torch.load('models/models/steering/1124162924.model'))
+        steeringNet.load_state_dict(torch.load('models/models/steering/1126104040.model'))
 
         # brakingNet = BrakingNet.getPlainNetwork()
         # brakingNet.load_state_dict(torch.load('models/models/braking/1124142419.model'))

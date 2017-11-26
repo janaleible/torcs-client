@@ -31,7 +31,8 @@ class Trainer:
         net.save(self.getModelsDir(), modelName)
 
         plt.plot(range(len(trainingLoss)), trainingLoss)
-        plt.show()
+        # plt.show()
+        plt.savefig(self.getModelsDir() + modelName + '.pdf')
 
     @abstractmethod
     def getNetwork(self) -> Net:

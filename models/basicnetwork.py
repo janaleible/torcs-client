@@ -1,6 +1,9 @@
 from abc import abstractmethod
 from typing import Callable
 import json
+
+import datetime
+import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 from torch.autograd import Variable
@@ -39,6 +42,8 @@ class Net(torch.nn.Module):
         dataLoader = DataLoader(data, shuffle=True)
 
         losses = []
+        modelName = datetime.datetime.now().strftime('%m%d%H%M%S')
+
         for epoch in range(numberOfEpochs):
 
             print('Epoch ' + str(epoch))
@@ -59,6 +64,11 @@ class Net(torch.nn.Module):
                 optimiser.step()
 
             losses.append(totalLoss.data.numpy()[0])
+
+
+            self.save('models/models/', modelName)
+            plt.plot(range(len(losses)), losses)
+            plt.savefig('models/models/steering/' + modelName + '.pdf')
 
         return losses
 

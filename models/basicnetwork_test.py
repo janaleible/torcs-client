@@ -6,7 +6,7 @@ from models.basicnetwork import SteeringNet
 from models.data_extended import ExtendedBrakingData, ExtendedSteeringData
 
 steeringNet = SteeringNet.getPlainNetwork(extended=True)
-steeringNet.load_state_dict(torch.load('models/models/steering/1126104040.model'))
+steeringNet.load_state_dict(torch.load('models/models/steering/1126145207.model'))
 
 SteeringTrainer(extended=True).train(
     ExtendedSteeringData(),
@@ -17,10 +17,10 @@ SteeringTrainer(extended=True).train(
     net=steeringNet
 )
 
-# BrakingTrainer(extended=True).train(
-#     ExtendedBrakingData(),
-#     torch.optim.Adam,
-#     F.mse_loss,
-#     300,
-#     0.00001
-# )
+BrakingTrainer(extended=True).train(
+    ExtendedBrakingData(),
+    torch.optim.Adam,
+    F.mse_loss,
+    10,
+    0.00001
+)

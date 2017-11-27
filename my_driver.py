@@ -1,19 +1,14 @@
-import math
-
 import pandas
 import torch
-from torch.autograd import Variable
 
 from models.Trainer import Trainer
 from pytocl.driver import Driver
 from pytocl.car import State, Command
 
-from models.basicnetwork import Net, SteeringNet, BrakingNet
+from models.basicnetwork import SteeringNet, BrakingNet
 
 
 class MyDriver(Driver):
-
-    angles = []
 
     timeSinceLastShift = 0
 
@@ -27,13 +22,7 @@ class MyDriver(Driver):
 
     def drive(self, carstate: State) -> Command:
 
-        self.angles.append(carstate.angle)
-
-        # if carstate.distances_from_edge[0] == -1:
-        #     return self.recoveryCommand()
-
         command = Command()
-
 
         steeringNet = SteeringNet.getPlainNetwork(extended=True)
         steeringNet.load_state_dict(torch.load('models/models/steering/1126145207.model'))
@@ -41,22 +30,14 @@ class MyDriver(Driver):
         # brakingNet = BrakingNet.getPlainNetwork()
         # brakingNet.load_state_dict(torch.load('models/models/braking/1124142419.model'))
 
-        # command.accelerator = self.predictionToFloat(prediction[0])
-        # command.brake = self.predictionToFloat(prediction[0])
-
         steeringSample = Trainer.stateToSample(carstate, extended=True)
         brakingSample = Trainer.stateToSample(carstate, extended=True)
-
-        # print(carstate)
 
         command.steering = steeringNet.predict(steeringSample)
         # command.brake = brakingNet.predict(brakingSample)
         command.accelerator = 0.2
 
-        print(command)
-
         command.gear = self.shiftGears(carstate.gear, carstate.rpm)
-        # command.gear = 1
 
         return command
 
@@ -69,21 +50,6 @@ class MyDriver(Driver):
         command.steering = 0
 
         return command
-
-    # def stateToSampleNormalised(self, state: State) -> Variable:
-    #
-    #     sample = [
-    #          (state.speed_x - self.stats['SPEED'][0]) / self.stats['SPEED'][1],
-    #          (state.distance_from_center - self.stats['TRACK_POSITION'][0]) / self.stats['TRACK_POSITION'][1],
-    #          (state.angle - self.stats['ANGLE_TO_TRACK_AXIS'][0]) / self.stats['ANGLE_TO_TRACK_AXIS'][1]
-    #     ] + [
-    #         (distance - self.stats['TRACK_EDGE_' + str(i)][0]) / self.stats['TRACK_EDGE_' + str(i)][1]
-    #         for i, distance in enumerate(state.distances_from_edge)
-    #     ]
-    #
-    #     return Variable(torch.FloatTensor(sample))
-
-
 
     def shiftGears(self, previousGear: int, rpm: float) -> int:
 
@@ -98,8 +64,3 @@ class MyDriver(Driver):
         else: self.timeSinceLastShift += 1
 
         return newGear
-
-
-
-    # def radiansToDegrees(self, radians: float) -> float:
-    #     return (radians * 180) / math.pi

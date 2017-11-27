@@ -36,7 +36,7 @@ class MyDriver(Driver):
 
 
         steeringNet = SteeringNet.getPlainNetwork(extended=True)
-        steeringNet.load_state_dict(torch.load('models/models/steering/1126104040.model'))
+        steeringNet.load_state_dict(torch.load('models/models/steering/1126145207.model'))
 
         # brakingNet = BrakingNet.getPlainNetwork()
         # brakingNet.load_state_dict(torch.load('models/models/braking/1124142419.model'))

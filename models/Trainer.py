@@ -23,9 +23,11 @@ class Trainer:
         optimiser: torch.optim,
         loss: Callable,
         numberOfEpochs: int,
-        learningRate: float
+        learningRate: float,
+        net = None
     ):
-        net = self.getNetwork()
+
+        if(net is None): net = self.getNetwork()
         trainingLoss = net.trainNet(data, optimiser, loss, numberOfEpochs, learningRate)
         modelName = datetime.datetime.now().strftime('%m%d%H%M%S')
         net.save(self.getModelsDir(), modelName)

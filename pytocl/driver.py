@@ -23,7 +23,7 @@ class Driver:
     def __init__(self, logdata=True):
         self.steering_ctrl = CompositeController(
             ProportionalController(0.4),
-            IntegrationController(0.2, integral_limit=1.5),
+            #IntegrationController(0.2, integral_limit=1.5),
             DerivativeController(2)
         )
         self.acceleration_ctrl = CompositeController(

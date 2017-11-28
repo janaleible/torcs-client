@@ -4,7 +4,7 @@ import socket
 
 from pytocl.car import State as CarState
 from pytocl.driver import Driver
-
+import numpy as np
 _logger = logging.getLogger(__name__)
 
 # special messages from server:
@@ -30,15 +30,24 @@ class Client:
     """
 
     def __init__(self, hostname='localhost', port=3001, *,
-                 driver=None, serializer=None):
+                 driver=None, serializer=None,data=None):
         self.hostaddr = (hostname, port)
         self.driver = driver or Driver()
         self.serializer = serializer or Serializer()
         self.state = State.STOPPED
         self.socket = None
-
+        self.datafile=data
         _logger.debug('Initializing {}.'.format(self))
-
+        self.crashed=False
+        self.stuck=False
+        self.fitness=0
+        self.timespend=0
+        self.stack=0
+        self.count=0
+        self.sumspeed=0
+        self.speed=0
+        self.position=0
+        self.positionReward=0
     def __repr__(self):
         return '{s.__class__.__name__}({s.hostaddr!r}) -- {s.state.name}' \
             ''.format(s=self)
@@ -52,27 +61,28 @@ class Client:
             self.state = State.STARTING
 
             try:
-                _logger.info('Registering driver client with server {}.'
-                             .format(self.hostaddr))
+                # _logger.info('Registering driver client with server {}.'
+                             # .format(self.hostaddr))
                 self._configure_udp_socket()
                 self._register_driver()
                 self.state = State.RUNNING
-                _logger.info('Connection successful.')
+                # _logger.info('Connection successful.')
 
             except socket.error as ex:
-                _logger.error('Cannot connect to server: {}'.format(ex))
+                # _logger.error('Cannot connect to server: {}'.format(ex))
                 self.state = State.STOPPED
 
         while self.state is State.RUNNING:
             self._process_server_msg()
 
-        _logger.info('Client stopped.')
+
+        # _logger.info('Client stopped.')
         self.state = State.STOPPED
 
     def stop(self):
         """Exits cyclic client execution (asynchronously)."""
         if self.state is State.RUNNING:
-            _logger.info('Disconnecting from racing server.')
+            # _logger.info('Disconnecting from racing server.')
             self.state = State.STOPPING
             self.driver.on_shutdown()
 
@@ -98,7 +108,7 @@ class Client:
             prefix='SCR-{}'.format(self.hostaddr[1])
         )
 
-        _logger.info('Registering client.')
+        # _logger.info('Registering client.')
 
         connected = False
         while not connected and self.state is not State.STOPPING:
@@ -116,6 +126,7 @@ class Client:
                 _logger.debug('No connection to server yet ({}).'.format(ex))
 
     def _process_server_msg(self):
+        
         try:
             buffer, _ = self.socket.recvfrom(TO_SOCKET_MSEC)
             _logger.debug('Received buffer {!r}.'.format(buffer))
@@ -125,18 +136,88 @@ class Client:
 
             elif MSG_SHUTDOWN in buffer:
                 _logger.info('Server requested shutdown.')
-                self.stop()
+                # if self.position==1:
+                #     meh=1000
+                # if self.position==2:
+                #     meh=500
+                # if self.position==3:
+                #     meh=200
+                # if self.position==4:
+                #     meh=100
+                with open(self.datafile,'w') as f:
+                    fitt=str(self.fitness)
+                    f.write(fitt)
+                    
+
+                    self.stop()
 
             elif MSG_RESTART in buffer:
+
                 _logger.info('Server requested restart of driver.')
                 self.driver.on_restart()
 
             else:
+
                 sensor_dict = self.serializer.decode(buffer)
                 carstate = CarState(sensor_dict)
                 _logger.debug(carstate)
-
                 command = self.driver.drive(carstate)
+
+                # print(carstate)
+                if carstate.current_lap_time>5:
+                   
+                    if carstate.distance_from_center<-0.9 or carstate.distance_from_center>0.9:
+                        self.crashed=True
+                    if   (carstate.speed_x<2 and carstate.current_lap_time>6  ):
+                        self.stuck=True
+                
+                # if carstate.distance_raced%22784==0:
+                #     self.stack+=carstate.last_lap_time
+                self.timespend=carstate.current_lap_time#+self.stack
+
+
+                
+
+                # self.fitness=carstate.distance_raced -carstate.current_lap_time*10
+                if self.crashed :
+                    
+                    with open(self.datafile,'w') as f:
+
+                        fitt=str(self.fitness)
+                        f.write(fitt)
+                        self.stop()
+                elif self.stuck:
+                    with open(self.datafile,'w') as f:
+
+                        fitt=str(self.fitness + self.positionReward)
+                        f.write(fitt)
+                
+                        self.stop()
+                else:
+                    self.count+=1
+
+                    self.sumspeed+=carstate.speed_x
+                    self.speed=self.sumspeed/self.count
+                    # print(carstate.race_position)
+                    self.position=carstate.race_position
+                    if carstate.distance_raced>200:
+                        if self.position==1:
+                            self.positionReward+=1
+                        if self.position==2:
+                            self.positionReward+=0.5
+                        if self.position==3:
+                            self.positionReward+=0.2
+                        # if self.position==4:
+                        #     self.meh+=0.1
+                    if carstate.distance_raced>400 and False:
+                        self.fitness=float((self.speed+float(carstate.distance_raced /100)) + self.positionReward) +30
+            # return "andreas is meh ********************************"
+                    else:
+                        self.fitness=float(carstate.distance_raced /200) + self.speed*10
+                    # if self.count<100:
+                    #     command.accelerator=1
+
+                # print("this is the message",sensor_dict)
 
                 _logger.debug(command)
                 buffer = self.serializer.encode(command.actuator_dict)

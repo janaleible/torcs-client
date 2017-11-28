@@ -38,11 +38,12 @@ def main(driver):
     )
 
     # start client loop:
-    client = Client(driver=driver, **args.__dict__)
+    client = Client(driver=driver, **args.__dict__,data="mydata.txt")
     client.run()
-
+    client.stop()
 
 if __name__ == '__main__':
     from pytocl.driver import Driver
 
     main(Driver())
+    

@@ -53,9 +53,9 @@ class Client:
         }
 
         self.priorities = {
-            'speed': 1,
+            'speed': 0,
             'distance': 1,
-            'crashPenalty': 15
+            'crashPenalty': 0
         }
 
         self.fitnessFile = fitnessFile
@@ -94,10 +94,11 @@ class Client:
 
     def stop(self):
         """Exits cyclic client execution (asynchronously)."""
+
         if self.state is State.RUNNING:
 
             with open(self.fitnessFile, 'w') as fitnessFile:
-                fitnessFile.write(self.evaluation['fitness'])
+                fitnessFile.write(str(self.evaluation['fitness']))
 
             _logger.info('Disconnecting from racing server.')
             self.state = State.STOPPING
@@ -164,19 +165,21 @@ class Client:
                 carstate = CarState(sensor_dict)
                 _logger.debug(carstate)
 
-                command = self.driver.drive(carstate)
-
-                self.evaluation['crashed'] = (abs(carstate.distance_from_center) > 1)
+                self.evaluation['crashed'] = (abs(carstate.distance_from_center) > 0.8)
                 self.evaluation['stuck'] = carstate.speed_x < 5 and carstate.current_lap_time > 10
                 self.evaluation['time'] = carstate.current_lap_time
-                self.evaluation['avgSpeed'] = carstate.distance_from_start / carstate.current_lap_time
+                self.evaluation['avgSpeed'] = max(0, carstate.distance_from_start / carstate.current_lap_time)
                 self.evaluation['position'] = carstate.race_position
                 self.evaluation['distance'] = carstate.distance_raced
 
                 self.evaluation['fitness'] = self.getFitness()
 
                 if(self.evaluation['crashed'] or self.evaluation['stuck']):
+                    print('Crashed' if self.evaluation['crashed'] else 'Stuck')
                     self.stop()
+
+                command = self.driver.drive(carstate)
+
 
                 _logger.debug(command)
                 buffer = self.serializer.encode(command.actuator_dict)
@@ -191,7 +194,6 @@ class Client:
             self.stop()
 
     def getFitness(self) -> float:
-
         return self.priorities['distance'] * self.evaluation['distance'] \
                + self.priorities['speed'] * self.evaluation['avgSpeed'] \
                - self.priorities['crashPenalty'] * (self.evaluation['crashed'] or self.evaluation['stuck'])

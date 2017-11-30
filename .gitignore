@@ -3,3 +3,8 @@ __pycache__/
 drivelogs/
 output/
 .idea/
+neat-checkpoint-*
+neat-*/
+training-data/
+models/models/
+fitnessFile

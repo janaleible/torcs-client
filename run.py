@@ -39,14 +39,14 @@ def run():
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          'neat/config-ctrnn')
 
-    population = Checkpointer().restore_checkpoint('neat-checkpoint-0')
+    population = Checkpointer().restore_checkpoint('neat-checkpoint-26')
     # population = neat.Population(config)
     population.add_reporter(neat.StdOutReporter(True))
     population.add_reporter(FileReporter(True))
     population.add_reporter(neat.StatisticsReporter())
     population.add_reporter(Checkpointer(generation_interval=1))
 
-    winner = population.run(eval_genomes, 3000)
+    winner = population.run(eval_genomes, 1)
 
     # winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
     with open('winner-neat', 'wb') as file:
@@ -56,3 +56,4 @@ def run():
 
 if __name__ == '__main__':
     run()
+

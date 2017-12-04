@@ -169,7 +169,7 @@ class Client:
                 carstate = CarState(sensor_dict)
                 _logger.debug(carstate)
 
-                self.evaluation['crashed'] = (abs(carstate.distance_from_center) > 0.9)
+                self.evaluation['crashed'] = (abs(carstate.distance_from_center) > 1.2)
                 self.evaluation['stuck'] = carstate.speed_x < 5 and carstate.current_lap_time > 10
                 self.evaluation['time'] = carstate.current_lap_time
                 self.evaluation['avgSpeed'] = max(0, carstate.distance_from_start / carstate.current_lap_time)
@@ -177,6 +177,7 @@ class Client:
                 self.evaluation['distance'] = carstate.distance_raced
                 self.evaluation['steering'] += 1
                 self.evaluation['lapComplete'] = carstate.last_lap_time > 0
+                self.evaluation['lapTime'] = carstate.last_lap_time
 
                 self.evaluation['fitness'] = self.getFitness()
 
@@ -201,10 +202,9 @@ class Client:
             self.stop()
 
     def getFitness(self) -> float:
-        return self.priorities['distance'] * self.evaluation['distance'] \
-               + self.priorities['speed'] * self.evaluation['avgSpeed'] \
-               - self.priorities['crashPenalty'] * (self.evaluation['crashed'] or self.evaluation['stuck']) \
-               - self.priorities['steeringPenalty'] * self.evaluation['steering']
+
+        if not self.evaluation['lapComplete']: return 0
+        else: return (1 / self.evaluation['lapTime']) * 100
 
 
 class State(enum.Enum):

@@ -1,3 +1,7 @@
+import pickle
+
+import neat
+
 from pytocl.driver import Driver
 from pytocl.car import State, Command, DEGREE_PER_RADIANS, MPS_PER_KMH
 
@@ -14,8 +18,18 @@ class MyDriver(Driver):
 
     def __init__(self, net):
 
+        config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                             neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                             'neat/config-ctrnn')
+
         super().__init__()
-        self.net = net
+        if not net is None: self.net = net
+        else:
+            with open('winner-neat', 'rb') as file:
+                # unpickler = pickle.Unpickler(file)
+                # pickled = unpickler.load()
+                pickled = pickle.load(file)
+                self.net = neat.nn.FeedForwardNetwork.create(pickled, config)
 
     def drive(self, carstate: State) -> Command:
 

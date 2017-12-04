@@ -26,7 +26,7 @@ class MyDriver(Driver):
 
         sample = self.state2sample(carstate)
 
-        command.steering = (self.net.advance(sample, 0.1, 5)[0] * 2) - 1
+        command.steering = (self.net.activate(sample)[0]) - 0.5
 
         return command
 

@@ -50,12 +50,16 @@ class Client:
             'time': 0,
             'avgSpeed': 0,
             'position': 0,
+            'steering': 0,
+            'iteration': 1,
+            'lapComplete': False
         }
 
         self.priorities = {
             'speed': 0,
             'distance': 1,
-            'crashPenalty': 0
+            'crashPenalty': 0,
+            'steeringPenalty': 100,
         }
 
         self.fitnessFile = fitnessFile
@@ -165,20 +169,23 @@ class Client:
                 carstate = CarState(sensor_dict)
                 _logger.debug(carstate)
 
-                self.evaluation['crashed'] = (abs(carstate.distance_from_center) > 0.8)
+                self.evaluation['crashed'] = (abs(carstate.distance_from_center) > 0.9)
                 self.evaluation['stuck'] = carstate.speed_x < 5 and carstate.current_lap_time > 10
                 self.evaluation['time'] = carstate.current_lap_time
                 self.evaluation['avgSpeed'] = max(0, carstate.distance_from_start / carstate.current_lap_time)
                 self.evaluation['position'] = carstate.race_position
                 self.evaluation['distance'] = carstate.distance_raced
+                self.evaluation['steering'] += 1
+                self.evaluation['lapComplete'] = carstate.last_lap_time > 0
 
                 self.evaluation['fitness'] = self.getFitness()
 
-                if(self.evaluation['crashed'] or self.evaluation['stuck']):
-                    print('Crashed' if self.evaluation['crashed'] else 'Stuck')
+                if(self.evaluation['crashed'] or self.evaluation['stuck'] or self.evaluation['lapComplete']):
                     self.stop()
 
                 command = self.driver.drive(carstate)
+
+                self.evaluation['steering'] = (self.evaluation['steering'] * (self.evaluation['iteration'] - 1) + abs(command.steering)) / self.evaluation['iteration']
 
 
                 _logger.debug(command)
@@ -196,7 +203,8 @@ class Client:
     def getFitness(self) -> float:
         return self.priorities['distance'] * self.evaluation['distance'] \
                + self.priorities['speed'] * self.evaluation['avgSpeed'] \
-               - self.priorities['crashPenalty'] * (self.evaluation['crashed'] or self.evaluation['stuck'])
+               - self.priorities['crashPenalty'] * (self.evaluation['crashed'] or self.evaluation['stuck']) \
+               - self.priorities['steeringPenalty'] * self.evaluation['steering']
 
 
 class State(enum.Enum):

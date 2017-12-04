@@ -1,19 +1,21 @@
 #! /usr/bin/env python3
-import neat
 import subprocess
 import pickle
-from neat.checkpoint import Checkpointer
+import neat
 
+from neat.checkpoint import Checkpointer
 from FileReporter import FileReporter
+from pytocl.driver import Driver
 from pytocl.main import main
 from my_driver import MyDriver
 
 # if __name__ == '__main__':
-#     main(MyDriver(None))
+#     main(Driver(False))
+
 
 def eval_genome(genome, config):
 
-    net = neat.ctrnn.CTRNN.create(genome, config, 10)
+    net = neat.nn.FeedForwardNetwork.create(genome, config)
 
     subprocess.call('neat/autostart.sh', shell=True)
 
@@ -24,7 +26,6 @@ def eval_genome(genome, config):
 
     subprocess.call('neat/autostop.sh', shell=True)
     print('fitness: {}'.format(fitness))
-
     return fitness
 
 def eval_genomes(genomes, config):
@@ -38,8 +39,8 @@ def run():
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          'neat/config-ctrnn')
 
-    population = Checkpointer().restore_checkpoint('neat-checkpoint-15')
-#    population = neat.Population(config)
+    population = Checkpointer().restore_checkpoint('neat-checkpoint-0')
+    # population = neat.Population(config)
     population.add_reporter(neat.StdOutReporter(True))
     population.add_reporter(FileReporter(True))
     population.add_reporter(neat.StatisticsReporter())

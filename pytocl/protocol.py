@@ -176,13 +176,13 @@ class Client:
                 self.evaluation['position'] = carstate.race_position
                 self.evaluation['distance'] = carstate.distance_raced
                 self.evaluation['steering'] += 1
-                self.evaluation['lapComplete'] = carstate.last_lap_time > 0
+                self.evaluation['lapComplete'] = False # carstate.last_lap_time > 0
                 self.evaluation['lapTime'] = carstate.last_lap_time
 
                 self.evaluation['fitness'] = self.getFitness()
 
-                if(self.evaluation['crashed'] or self.evaluation['stuck'] or self.evaluation['lapComplete']):
-                    self.stop()
+                # if(self.evaluation['crashed'] or self.evaluation['stuck'] or self.evaluation['lapComplete']):
+                #     self.stop()
 
                 command = self.driver.drive(carstate)
 

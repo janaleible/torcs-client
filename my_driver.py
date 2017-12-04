@@ -30,17 +30,47 @@ class MyDriver(Driver):
                 # pickled = unpickler.load()
                 pickled = pickle.load(file)
                 self.net = neat.nn.FeedForwardNetwork.create(pickled, config)
+                
+        self.state = 'normal'
 
     def drive(self, carstate: State) -> Command:
 
         command = Command()
 
-        command.accelerator = 0.2
-        command.gear = self.shiftGears(carstate.gear, carstate.rpm)
 
-        sample = self.state2sample(carstate)
+        if self.state == 'reverse':
+            command.steering = 1
+            command.accelerator = 0.2
+            command.gear = 1
 
-        command.steering = (self.net.activate(sample)[0]) - 0.5
+        elif self.state == 'off-track-left':
+            command.steering = -1
+            command.gear = -1
+            command.accelerator = 0.5
+
+        elif self.state == 'off-track-right':
+            command.steering = 1
+            command.gear = -1
+            command.accelerator = 0.5
+
+        else:
+            sample = self.state2sample(carstate)
+
+            command.accelerator = self.my_accelerate(carstate.speed_x)
+            command.gear = self.shiftGears(carstate.gear, carstate.rpm)
+            command.steering = (self.net.activate(sample)[0]) - 0.5
+
+
+
+        # if self.state == 'off-track-left' and all(distance > 0 for distance in carstate.distances_from_edge): self.state = 'normal'
+        # elif self.state == 'off-track-right' and all(distance > 0 for distance in carstate.distances_from_edge): self.state = 'normal'
+        # elif carstate.angle > 90 and carstate.angle < 270: self.state = 'reverse'
+        # elif all(distance < 0 for distance in carstate.distances_from_edge):
+        #     if carstate.angle < 180: self.state = 'off-track-right'
+        #     else: self.state = 'off-track-left'
+        #
+        #
+        # else: self.state = 'normal'
 
         return command
 
@@ -75,3 +105,9 @@ class MyDriver(Driver):
             self.timeSinceLastShift += 1
 
         return newGear
+
+    def my_accelerate(self, speed) -> float:
+
+        if speed < 20: return 1
+        else: return min(0.2, -0.02 * speed + 1.8)
+

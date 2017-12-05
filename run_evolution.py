@@ -38,19 +38,17 @@ def eval_genomes(genomes, config):
 
 def run():
 
-
-
-    population = Checkpointer().restore_checkpoint('neat-checkpoint-26')
+    population = Checkpointer().restore_checkpoint('neat-checkpoint-222')
     # population = neat.Population(config)
     population.add_reporter(neat.StdOutReporter(True))
     population.add_reporter(FileReporter(True))
     population.add_reporter(neat.StatisticsReporter())
     population.add_reporter(Checkpointer(generation_interval=1))
 
-    winner = population.run(eval_genomes, 0)
+    winner = population.run(eval_genomes, 400)
 
     # winner_net = neat.nn.FeedForwardNetwork.create(winner, config)
-    with open('winner-neat', 'wb') as file:
+    with open('winner-neat-full', 'wb') as file:
         pickle.dump(winner, file)
 
     print(winner)

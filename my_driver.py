@@ -25,7 +25,7 @@ class MyDriver(Driver):
         super().__init__()
         if not net is None: self.net = net
         else:
-            with open('winner-neat', 'rb') as file:
+            with open('winner-neat-full-2', 'rb') as file:
                 # unpickler = pickle.Unpickler(file)
                 # pickled = unpickler.load()
                 pickled = pickle.load(file)
@@ -56,10 +56,15 @@ class MyDriver(Driver):
         else:
             sample = self.state2sample(carstate)
 
-            command.accelerator = self.my_accelerate(carstate.speed_x)
-            command.gear = self.shiftGears(carstate.gear, carstate.rpm)
-            command.steering = (self.net.activate(sample)[0]) - 0.5
+            result = self.net.activate(sample)
 
+            # command.accelerator = self.my_accelerate(carstate.speed_x)
+            command.gear = self.shiftGears(carstate.gear, carstate.rpm)
+            command.steering = result[0] - 0.5
+            command.accelerator = result[1]
+            command.brake = result[2]
+
+            # print('brake: {}, acc: {}, steering: {}'.format(command.brake, command.accelerator, command.steering))
 
 
         # if self.state == 'off-track-left' and all(distance > 0 for distance in carstate.distances_from_edge): self.state = 'normal'

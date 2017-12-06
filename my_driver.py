@@ -1,4 +1,5 @@
 import pickle
+from collections import defaultdict
 
 import neat
 
@@ -16,6 +17,8 @@ class MyDriver(Driver):
         'down': 2000
     }
 
+    roadmap = []
+
     def __init__(self, net):
 
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -25,7 +28,7 @@ class MyDriver(Driver):
         super().__init__()
         if not net is None: self.net = net
         else:
-            with open('winner-neat-full-2', 'rb') as file:
+            with open('winner-neat', 'rb') as file:
                 # unpickler = pickle.Unpickler(file)
                 # pickled = unpickler.load()
                 pickled = pickle.load(file)
@@ -58,11 +61,30 @@ class MyDriver(Driver):
 
             result = self.net.activate(sample)
 
-            # command.accelerator = self.my_accelerate(carstate.speed_x)
+            command.accelerator = self.my_accelerate(carstate.speed_x)
             command.gear = self.shiftGears(carstate.gear, carstate.rpm)
             command.steering = result[0] - 0.5
-            command.accelerator = result[1]
-            command.brake = result[2]
+            command.brake = 0
+
+            position = (int(carstate.distance_from_start) - (int(carstate.distance_from_start) % 10)) / 10
+
+            if int(carstate.distance_from_start) / 10 < len(self.roadmap):
+                if max(self.roadmap[int(carstate.distance_from_start):int(carstate.distance_from_start) + 20]) < 0.1:
+                    command.accelerator = 1
+                    print('speed up')
+                else:
+                    if carstate.speed_x > 80:
+                        command.brake = 1
+                        command.accelerator = 0
+                        print('slow down')
+
+
+            if(int(carstate.distance_from_start) == 0):
+                print('start')
+
+            if len(self.roadmap) == (int(carstate.distance_from_start) / 10) and int(carstate.distance_from_start) % 10 == 0:
+                self.roadmap.append(abs(command.steering))
+                print(self.roadmap)
 
             # print('brake: {}, acc: {}, steering: {}'.format(command.brake, command.accelerator, command.steering))
 

@@ -32,9 +32,15 @@ class Trainer:
         modelName = datetime.datetime.now().strftime('%m%d%H%M%S')
         net.save(self.getModelsDir(), modelName)
 
-        plt.plot(range(len(trainingLoss)), trainingLoss)
-        # plt.show()
-        plt.savefig(self.getModelsDir() + modelName + '.pdf')
+        # plt.plot(range(len(trainingLoss)), trainingLoss)
+        # plt.ylabel('Training Loss')
+        # plt.xlabel('Epochs')
+        # plt.savefig(self.getModelsDir() + 'loss' + modelName + '.pdf')
+        # plt.close()
+
+        print(modelName)
+
+        return net
 
     @abstractmethod
     def getNetwork(self) -> Net:

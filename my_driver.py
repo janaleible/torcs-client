@@ -18,26 +18,36 @@ class MyDriver(Driver):
         'down': 2000
     }
 
-    stats = pandas.read_csv('./training-data/train_data/allstats.csv')
+    def __init__(self, steeringNet, brakingNet, extended):
+        self.steeringNet = steeringNet
+        self.brakingNet = brakingNet
+        self.extended = extended
+
+        if steeringNet is None:
+            steeringNet = SteeringNet.getPlainNetwork(extended=True)
+            steeringNet.load_state_dict(torch.load('models/models/steering/1206112224.model'))
+            self.steeringNet = steeringNet
+
+
 
     def drive(self, carstate: State) -> Command:
 
         command = Command()
 
-        steeringNet = SteeringNet.getPlainNetwork(extended=True)
-        steeringNet.load_state_dict(torch.load('models/models/steering/1126145207.model'))
 
         # brakingNet = BrakingNet.getPlainNetwork()
         # brakingNet.load_state_dict(torch.load('models/models/braking/1124142419.model'))
 
-        steeringSample = Trainer.stateToSample(carstate, extended=True)
-        brakingSample = Trainer.stateToSample(carstate, extended=True)
+        steeringSample = Trainer.stateToSample(carstate, True)
+        # brakingSample = Trainer.stateToSample(carstate, self.extended)
 
-        command.steering = steeringNet.predict(steeringSample)
-        # command.brake = brakingNet.predict(brakingSample)
+
+        command.steering = self.steeringNet.predict(steeringSample)
+        # if self.brakingNet is not None: command.brake = self.brakingNet.predict(brakingSample)
         command.accelerator = 0.2
 
         command.gear = self.shiftGears(carstate.gear, carstate.rpm)
+        print(command)
 
         return command
 
@@ -64,3 +74,8 @@ class MyDriver(Driver):
         else: self.timeSinceLastShift += 1
 
         return newGear
+
+    def my_accelerate(self, speed) -> float:
+
+        if speed < 20: return 1
+        else: return min(0.2, -0.02 * speed + 1.8)

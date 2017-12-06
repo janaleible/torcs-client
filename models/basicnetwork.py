@@ -66,9 +66,10 @@ class Net(torch.nn.Module):
             losses.append(totalLoss.data.numpy()[0])
 
 
-            self.save('models/models/', modelName)
-            plt.plot(range(len(losses)), losses)
-            plt.savefig('models/models/steering/' + modelName + '.pdf')
+            # self.save('models/models/', modelName)
+            # plt.plot(range(len(losses)), losses)
+            # plt.savefig('models/models/steering/' + modelName + '.pdf')
+            # plt.close()
 
         return losses
 

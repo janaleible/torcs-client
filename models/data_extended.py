@@ -11,18 +11,22 @@ from models.data import TrainingData
 
 class ExtendedData(TrainingData):
 
-    def __init__(self, track='alpine_1'):
+    def __init__(self, case, track='alpine_1'):
 
         db = sqlite3.connect('training-data/trainingData.db')
 
+        comparator = '!=' if case == 'train' else '='
+
         sqlData = 'SELECT ' \
                   + list2list(self.getDataColumns()) \
-                  + ' FROM observations'
+                  + ' FROM observations ' \
+                  + " where substr(cast(steer as varchar), -1) {} '1'".format(comparator)
                   # + ' FROM observations WHERE track = \'' + track + '\''
 
         sqlTarget = 'SELECT ' \
                   + list2list(self.getTargetColumns()) \
-                  + ' FROM observations'
+                  + ' FROM observations' \
+                  + " where substr(cast(steer as varchar), -1) {} '1'".format(comparator)
                   # + ' FROM observations WHERE track = \'' + track + '\''
 
         self.data = DataFrame(db.execute(

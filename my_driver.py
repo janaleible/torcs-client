@@ -1,6 +1,8 @@
 import pickle
 from collections import defaultdict
 
+import math
+
 import neat
 
 from pytocl.driver import Driver
@@ -36,6 +38,9 @@ class MyDriver(Driver):
                 
         self.state = 'normal'
 
+        with open('roadmap', 'wb') as file:
+            pickle.dump([], file)
+
     def drive(self, carstate: State) -> Command:
 
         command = Command()
@@ -66,10 +71,14 @@ class MyDriver(Driver):
             command.steering = result[0] - 0.5
             command.brake = 0
 
-            position = (int(carstate.distance_from_start) - (int(carstate.distance_from_start) % 10)) / 10
+            interval = 10
+            position = math.floor(int(carstate.distance_from_start) / interval)
 
-            if int(carstate.distance_from_start) / 10 < len(self.roadmap):
-                if max(self.roadmap[int(carstate.distance_from_start):int(carstate.distance_from_start) + 20]) < 0.1:
+            with open('roadmap', 'rb') as file:
+                self.roadmap = pickle.load(file)
+
+            if position + 1 < len(self.roadmap):
+                if max(self.roadmap[position:position + int(200 / interval)]) < 0.1:
                     command.accelerator = 1
                     print('speed up')
                 else:
@@ -79,14 +88,14 @@ class MyDriver(Driver):
                         print('slow down')
 
 
-            if(int(carstate.distance_from_start) == 0):
-                print('start')
-
-            if len(self.roadmap) == (int(carstate.distance_from_start) / 10) and int(carstate.distance_from_start) % 10 == 0:
+            if len(self.roadmap) == position and int(carstate.distance_from_start) % interval == 0:
                 self.roadmap.append(abs(command.steering))
-                print(self.roadmap)
+                print('Pos: {}, len(RM): {}'.format(position, len(self.roadmap)))
+                # print(self.roadmap)
+                with open('roadmap', 'wb') as file:
+                    pickle.dump(self.roadmap, file)
 
-            # print('brake: {}, acc: {}, steering: {}'.format(command.brake, command.accelerator, command.steering))
+            print('brake: {}, acc: {}, steering: {}'.format(command.brake, command.accelerator, command.steering))
 
 
         # if self.state == 'off-track-left' and all(distance > 0 for distance in carstate.distances_from_edge): self.state = 'normal'

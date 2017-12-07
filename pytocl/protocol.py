@@ -60,6 +60,7 @@ class Client:
             'distance': 1,
             'crashPenalty': 0,
             'steeringPenalty': 100,
+            'damagePenalty': 5
         }
 
         self.fitnessFile = fitnessFile
@@ -177,14 +178,15 @@ class Client:
                 self.evaluation['steering'] += 1
                 self.evaluation['lapComplete'] = carstate.last_lap_time > 0
                 self.evaluation['lapTime'] = carstate.last_lap_time
+                self.evaluation['damage'] = carstate.damage
 
                 self.evaluation['avgSpeed'] = 0 if carstate.current_lap_time <= 0 or carstate.distance_from_start <= 0 else\
                     min(carstate.distance_raced, carstate.distance_from_start) / carstate.current_lap_time
 
                 self.evaluation['fitness'] = self.getFitness()
 
-                # if(self.evaluation['crashed'] or self.evaluation['stuck'] or self.evaluation['lapComplete']):
-                #     self.stop()
+                if self.evaluation['crashed'] or self.evaluation['stuck']:
+                    self.stop()
 
                 command = self.driver.drive(carstate)
                 self.evaluation['steering'] = (self.evaluation['steering'] * (self.evaluation['iteration'] - 1) + abs(command.steering)) / self.evaluation['iteration']
@@ -208,7 +210,8 @@ class Client:
         return \
             self.priorities['speed'] * self.evaluation['avgSpeed'] \
             + self.priorities['distance'] * self.evaluation['distance'] \
-            - self.priorities['steeringPenalty'] * self.evaluation['steering']
+            - self.priorities['steeringPenalty'] * self.evaluation['steering'] \
+            - self.priorities['damagePenalty'] * self.evaluation['damage']
 
 
 class State(enum.Enum):

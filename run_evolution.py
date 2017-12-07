@@ -38,8 +38,8 @@ def eval_genomes(genomes, config):
 
 def run():
 
-    population = Checkpointer().restore_checkpoint('neat-checkpoint-222')
-    # population = neat.Population(config)
+    # population = Checkpointer().restore_checkpoint('neat-checkpoint-222')
+    population = neat.Population(config)
     population.add_reporter(neat.StdOutReporter(True))
     population.add_reporter(FileReporter(True))
     population.add_reporter(neat.StatisticsReporter())

@@ -30,7 +30,7 @@ class MyDriver(Driver):
         super().__init__()
         if not net is None: self.net = net
         else:
-            with open('winner-neat', 'rb') as file:
+            with open('winner-neat-opponents', 'rb') as file:
                 # unpickler = pickle.Unpickler(file)
                 # pickled = unpickler.load()
                 pickled = pickle.load(file)
@@ -38,8 +38,8 @@ class MyDriver(Driver):
                 
         self.state = 'normal'
 
-        with open('roadmap', 'wb') as file:
-            pickle.dump([], file)
+        # with open('roadmap', 'wb') as file:
+        #     pickle.dump([], file)
 
     def drive(self, carstate: State) -> Command:
 
@@ -74,28 +74,28 @@ class MyDriver(Driver):
             interval = 10
             position = math.floor(int(carstate.distance_from_start) / interval)
 
-            with open('roadmap', 'rb') as file:
-                self.roadmap = pickle.load(file)
-
-            if position + 1 < len(self.roadmap):
-                if max(self.roadmap[position:position + int(200 / interval)]) < 0.1:
-                    command.accelerator = 1
-                    print('speed up')
-                else:
-                    if carstate.speed_x > 80:
-                        command.brake = 1
-                        command.accelerator = 0
-                        print('slow down')
-
-
-            if len(self.roadmap) == position and int(carstate.distance_from_start) % interval == 0:
-                self.roadmap.append(abs(command.steering))
-                print('Pos: {}, len(RM): {}'.format(position, len(self.roadmap)))
-                # print(self.roadmap)
-                with open('roadmap', 'wb') as file:
-                    pickle.dump(self.roadmap, file)
-
-            print('brake: {}, acc: {}, steering: {}'.format(command.brake, command.accelerator, command.steering))
+            # with open('roadmap', 'rb') as file:
+            #     self.roadmap = pickle.load(file)
+            #
+            # if position + 1 < len(self.roadmap):
+            #     if max(self.roadmap[position:position + int(200 / interval)]) < 0.1:
+            #         command.accelerator = 1
+            #         print('speed up')
+            #     else:
+            #         if carstate.speed_x > 80:
+            #             command.brake = 1
+            #             command.accelerator = 0
+            #             print('slow down')
+            #
+            #
+            # if len(self.roadmap) == position and int(carstate.distance_from_start) % interval == 0:
+            #     self.roadmap.append(abs(command.steering))
+            #     print('Pos: {}, len(RM): {}'.format(position, len(self.roadmap)))
+            #     # print(self.roadmap)
+            #     with open('roadmap', 'wb') as file:
+            #         pickle.dump(self.roadmap, file)
+            #
+            # print('brake: {}, acc: {}, steering: {}'.format(command.brake, command.accelerator, command.steering))
 
 
         # if self.state == 'off-track-left' and all(distance > 0 for distance in carstate.distances_from_edge): self.state = 'normal'
@@ -115,9 +115,10 @@ class MyDriver(Driver):
         sample = []
         sample.append(carstate.angle / DEGREE_PER_RADIANS)
         sample.append(carstate.distance_from_center)
-        sample.append(carstate.speed_x / MPS_PER_KMH)
+        #sample.append(carstate.speed_x / MPS_PER_KMH)
+        # sample.append(80)
         [sample.append(distance) for distance in carstate.distances_from_edge]
-        # [sample.append(sum(carstate.opponents[6*i:6*i+5])) for i in range(6)]
+        [sample.append(sum(carstate.opponents[6*i:6*i+5])) for i in range(6)]
         # sample.append(carstate.z)
         return sample
 

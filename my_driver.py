@@ -39,7 +39,13 @@ class MyDriver(Driver):
         with open('roadmap', 'wb') as file:
             pickle.dump([], file)
 
+        self.speedup = None
+
     def drive(self, carstate: State) -> Command:
+
+        if self.speedup is None:
+            self.speedup = any(opponent !=200 for opponent in carstate.opponents)
+            print(self.speedup)
 
         command = Command()
 
@@ -81,7 +87,7 @@ class MyDriver(Driver):
         with open('roadmap', 'rb') as file:
             self.roadmap = pickle.load(file)
 
-        if position + 1 < len(self.roadmap):
+        if self.speedup and position + 1 < len(self.roadmap):
             if max(self.roadmap[position:position + int(200 / interval)]) < 0.1 and carstate.speed_x < 180:
                 command.accelerator = 1
             else:

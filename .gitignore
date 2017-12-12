@@ -12,3 +12,6 @@ neat/
 *.pdf
 neatReport.txt
 roadmap
+.~lock.*
+neat-python-master/
+

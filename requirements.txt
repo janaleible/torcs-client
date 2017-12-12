@@ -1,3 +1,5 @@
 # --only-binary :all:
 # matplotlib
 numpy
+torch
+pandas

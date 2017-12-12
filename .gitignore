@@ -8,3 +8,7 @@ neat-*/
 training-data/
 models/models/
 fitnessFile
+neat/
+*.pdf
+neatReport.txt
+roadmap

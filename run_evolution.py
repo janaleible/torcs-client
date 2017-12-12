@@ -14,7 +14,7 @@ from my_driver import MyDriver
 
 config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         'neat/config-ctrnn')
+                         'neat/config')
 
 def eval_genome(genome, config):
 

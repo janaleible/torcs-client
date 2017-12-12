@@ -29,13 +29,40 @@ class Client:
         socket (socket): UDP socket to server.
     """
 
-    def __init__(self, hostname='localhost', port=3001, *,
-                 driver=None, serializer=None):
+    def __init__(self,
+        hostname='localhost',
+        port=3001, *,
+        driver=None,
+        serializer=None,
+        fitnessFile='neat/fitnessFile'
+    ):
+
         self.hostaddr = (hostname, port)
         self.driver = driver or Driver()
         self.serializer = serializer or Serializer()
         self.state = State.STOPPED
         self.socket = None
+
+        self.evaluation = {
+            'crashed': False,
+            'stuck': False,
+            'fitness': 0,
+            'time': 0,
+            'avgSpeed': 0,
+            'position': 0,
+            'steering': 0,
+            'iteration': 1,
+            'lapComplete': False
+        }
+
+        self.priorities = {
+            'speed': 5,
+            'distance': 1,
+            'crashPenalty': 0,
+            'steeringPenalty': 100,
+        }
+
+        self.fitnessFile = fitnessFile
 
         _logger.debug('Initializing {}.'.format(self))
 
@@ -71,7 +98,12 @@ class Client:
 
     def stop(self):
         """Exits cyclic client execution (asynchronously)."""
+
         if self.state is State.RUNNING:
+
+            with open(self.fitnessFile, 'w') as fitnessFile:
+                fitnessFile.write(str(self.evaluation['fitness']))
+
             _logger.info('Disconnecting from racing server.')
             self.state = State.STOPPING
             self.driver.on_shutdown()
@@ -125,6 +157,7 @@ class Client:
 
             elif MSG_SHUTDOWN in buffer:
                 _logger.info('Server requested shutdown.')
+
                 self.stop()
 
             elif MSG_RESTART in buffer:
@@ -136,7 +169,27 @@ class Client:
                 carstate = CarState(sensor_dict)
                 _logger.debug(carstate)
 
+                self.evaluation['crashed'] = (abs(carstate.distance_from_center) > 0.9)
+                self.evaluation['stuck'] = carstate.speed_x < 5 and carstate.current_lap_time > 10
+                self.evaluation['time'] = carstate.current_lap_time
+                self.evaluation['position'] = carstate.race_position
+                self.evaluation['distance'] = carstate.distance_raced
+                self.evaluation['steering'] += 1
+                self.evaluation['lapComplete'] = carstate.last_lap_time > 0
+                self.evaluation['lapTime'] = carstate.last_lap_time
+
+                self.evaluation['avgSpeed'] = 0 if carstate.current_lap_time <= 0 or carstate.distance_from_start <= 0 else\
+                    min(carstate.distance_raced, carstate.distance_from_start) / carstate.current_lap_time
+
+                self.evaluation['fitness'] = self.getFitness()
+
+                # if(self.evaluation['crashed'] or self.evaluation['stuck'] or self.evaluation['lapComplete']):
+                #     self.stop()
+
                 command = self.driver.drive(carstate)
+                self.evaluation['steering'] = (self.evaluation['steering'] * (self.evaluation['iteration'] - 1) + abs(command.steering)) / self.evaluation['iteration']
+
+                # print('speed: {}, time: {}, distance: {}'.format(self.evaluation['avgSpeed'], carstate.current_lap_time, self.evaluation['distance']))
 
                 _logger.debug(command)
                 buffer = self.serializer.encode(command.actuator_dict)
@@ -149,6 +202,13 @@ class Client:
         except KeyboardInterrupt:
             _logger.info('User requested shutdown.')
             self.stop()
+
+    def getFitness(self) -> float:
+
+        return \
+            self.priorities['speed'] * self.evaluation['avgSpeed'] \
+            + self.priorities['distance'] * self.evaluation['distance'] \
+            - self.priorities['steeringPenalty'] * self.evaluation['steering']
 
 
 class State(enum.Enum):
@@ -234,3 +294,7 @@ class Serializer:
             pos = end + 1
 
         return d
+
+    @staticmethod
+    def rolling_average(average, iterations, newValue):
+        return ((average * iterations) + newValue) / (iterations + 1)
